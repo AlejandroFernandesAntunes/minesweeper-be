@@ -7,7 +7,7 @@ class Board < BaseTransaction
   def params(input)
     @rows = input.dig(:params, :rows)
     @cols = input.dig(:params, :cols)
-    @difficulty = input.dig(:params, :difficulty)
+    @difficulty = input.dig(:params, :difficulty) || 5
     @total_rows = @rows * @cols
   end
 
