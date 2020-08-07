@@ -1,5 +1,5 @@
 class GraphqlController < ApplicationController
-  before_action :gatekeeper # , unless: -> { Rails.env.development? }
+  before_action :gatekeeper, unless: -> { Rails.env.development? }
 
   def execute
     variables = prepare_variables(params[:variables])
