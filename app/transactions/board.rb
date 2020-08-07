@@ -19,7 +19,7 @@ class Board < BaseTransaction
                         (@total_rows * 0.50).to_i
                       else
                         (@total_rows * 0.75).to_i
-    end
+                      end
 
     Success({ amount_of_bombs: amount_of_bombs })
   end

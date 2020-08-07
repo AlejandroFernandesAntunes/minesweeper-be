@@ -1,8 +1,5 @@
 class GraphqlController < ApplicationController
-  # If accessing from outside this domain, nullify the session
-  # This allows for outside API access while preventing CSRF attacks,
-  # but you'll have to authenticate your user separately
-  # protect_from_forgery with: :null_session
+  before_action :gatekeeper # , unless: -> { Rails.env.development? }
 
   def execute
     variables = prepare_variables(params[:variables])
@@ -47,5 +44,36 @@ class GraphqlController < ApplicationController
     logger.error e.backtrace.join("\n")
 
     render json: { errors: [{ message: e.message, backtrace: e.backtrace }], data: {} }, status: 500
+  end
+
+  def gatekeeper
+    check_jwt
+    req_url_whitelisted?
+  end
+
+  def req_url_whitelisted?
+    whitelisted_urls = ENV['WHITELISTED_URLS']
+    head 403 if whitelisted_urls.exclude?(request.original_url)
+  end
+
+  def check_jwt
+    begin
+      options = { algorithm: 'HS256' }
+      auth_header = request.headers['Authorization']
+      head 403 unless auth_header.present?
+      bearer = auth_header.slice(7..-1)
+      payload, header = JWT.decode bearer,
+                                   ENV['JWT_SECRET'], false, options
+      iss = payload['iss']
+      head 403 unless ENV['ALLOWED_ISS'].split(',').include?(iss)
+    rescue JWT::DecodeError
+      head 401
+    rescue JWT::ExpiredSignature
+      head 403
+    rescue JWT::InvalidIssuerError
+      head 403
+    rescue JWT::InvalidIatError
+      head 403
+    end
   end
 end
